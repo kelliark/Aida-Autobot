@@ -16,7 +16,6 @@ function getRandomUserAgent() {
     "Mozilla/5.0 (iPad; CPU OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1",
     "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:91.0) Gecko/20100101 Firefox/91.0",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15",
-    // Add more user agent strings as desired.
   ];
   return userAgents[Math.floor(Math.random() * userAgents.length)];
 }
@@ -30,7 +29,6 @@ const defaultConfig = {
     'accept': '*/*',
     'origin': 'https://my.aidapp.com',
     'referer': 'https://my.aidapp.com/',
-    // The user-agent will be overridden with a random one.
     'user-agent': 'default'
   }
 };
@@ -177,7 +175,7 @@ function obfuscateToken(token) {
   return token.substring(0, 4) + '****' + token.substring(token.length - 4);
 }
 
-// Main function: For each account, create a wallet, randomly select a referral from refs.txt, use a proxy (with HTTP & HTTPS agents), perform an IP lookup via ip-api.com, login, then complete all four tasks in a random order.
+// Main function: For each account, create a wallet, randomly select a referral from refs.txt, use a proxy (with HTTP & HTTPS agents), perform an IP lookup via ip-api.com using a fresh axios.get call, login, then complete all four tasks in a random order.
 async function main() {
   const proxies = await loadProxies();
   if (proxies.length === 0) {
@@ -202,7 +200,9 @@ async function main() {
     const axiosInstance = createAxiosInstance(proxy);
     if (proxy) {
       try {
-        const ipResponse = await axiosInstance.get("http://ip-api.com/json", {
+        // Force the IP lookup through the proxy using axios.get with explicit httpAgent
+        const ipResponse = await axios.get("http://ip-api.com/json", {
+          httpAgent: new HttpProxyAgent(proxy),
           headers: { ...defaultConfig.headers, 'Connection': 'close' }
         });
         console.log(chalk.cyan(`Ip used: ${ipResponse.data.query}`));
